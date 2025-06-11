@@ -27,7 +27,6 @@ def generate_query(state: SummaryState, config: RunnableConfig):
     Returns:
         Dictionary with state update, including search_query key containing the generated query
     """
-
     # Format the prompt
     current_date = get_current_date()
     formatted_prompt = query_writer_instructions.format(

@@ -46,6 +46,7 @@ def generate_query(state: SummaryState, config: RunnableConfig):
             format="json"
         )
     else: # Default to Ollama
+        print(configurable.ollama_base_url)
         llm_json_mode = ChatOllama(
             base_url=configurable.ollama_base_url, 
             model=configurable.local_llm, 

@@ -9,6 +9,8 @@ services:
     restart: always
     networks:
       - ollama-net 
+    volumes:
+    - ollama:/root/.ollama
     deploy:
       resources:
         reservations:
@@ -16,8 +18,9 @@ services:
             - driver: nvidia
               count: all
               capabilities: ["gpu"]
-
+  
   local_deep_researcher:
+    container_name: local_deep_researcher
     build: .
     ports:
       - "2024:2024"
@@ -31,3 +34,6 @@ services:
 networks:
   ollama-net:
     driver: bridge
+
+volumes:
+  ollama:

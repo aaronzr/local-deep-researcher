@@ -2,7 +2,6 @@ import os
 from enum import Enum
 from pydantic import BaseModel, Field
 from typing import Any, Optional, Literal
-
 from langchain_core.runnables import RunnableConfig
 
 class SearchAPI(Enum):
@@ -10,6 +9,18 @@ class SearchAPI(Enum):
     TAVILY = "tavily"
     DUCKDUCKGO = "duckduckgo"
     SEARXNG = "searxng"
+
+def detect_default_ollama_base_url() -> str:
+    # Auto-detect whether running in Compose
+    if os.environ.get("COMPOSE_PROJECT") or os.environ.get("COMPOSE_PROJECT_NAME"):
+        # Inside Compose → use container network
+        return "http://ollama:11434"
+    elif os.environ.get("RUNNING_IN_DOCKER", "").lower() == "true":
+        # Optional: if you define RUNNING_IN_DOCKER in plain docker run
+        return "http://host.docker.internal:11434"
+    else:
+        # Local run
+        return "http://localhost:11434"
 
 class Configuration(BaseModel):
     """The configurable fields for the research assistant."""
@@ -40,12 +51,12 @@ class Configuration(BaseModel):
         description="Include the full page content in the search results"
     )
     ollama_base_url: str = Field(
-        default="http://localhost:11434/",
+        default_factory=lambda: os.environ.get("OLLAMA_BASE_URL", detect_default_ollama_base_url()),
         title="Ollama Base URL",
         description="Base URL for Ollama API"
     )
     lmstudio_base_url: str = Field(
-        default="http://localhost:1234/v1",
+        default_factory=lambda: os.environ.get("LMSTUDIO_BASE_URL", "http://localhost:1234/v1"),
         title="LMStudio Base URL",
         description="Base URL for LMStudio OpenAI-compatible API"
     )
@@ -64,7 +75,6 @@ class Configuration(BaseModel):
             config["configurable"] if config and "configurable" in config else {}
         )
         
-        # Get raw values from environment or config
         raw_values: dict[str, Any] = {
             name: os.environ.get(name.upper(), configurable.get(name))
             for name in cls.model_fields.keys()
